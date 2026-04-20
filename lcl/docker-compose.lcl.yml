@@ -1,9 +1,9 @@
-name: pm-budgetscanner-lcl
+name: pm-spel-lcl
 
 services:
-  pm-budgetscanner-lcl:
-    image: plusmin/pm-budgetscanner:${PM_LCL_VERSION}
-    container_name: pm-budgetscanner-lcl
+  pm-spel-lcl:
+    image: plusmin/pm-spel:${PM_LCL_VERSION}
+    container_name: pm-spel-lcl
     environment:
       - TZ=Europe/Amsterdam
       - VITE_ASGARDEO_CLIENT_ID=ahVUPaBf3D1mE5xrZIM2aAmIRVYa

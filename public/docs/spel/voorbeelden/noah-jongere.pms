@@ -1,0 +1,80 @@
+{
+  "soort": "plusmin-persona",
+  "schemaVersie": 1,
+  "persona": {
+    "naam": "Noah Jongere",
+    "taal": "nl",
+    "context": "jongeren",
+    "beschrijving": "Persona voor jongeren die leren plannen met weekbudgetten.",
+    "niveau": 1,
+    "startsaldo": 40,
+    "dobbelWaarden": {
+      "euro": 7,
+      "tweeEuro": 12,
+      "drieEuro": 18
+    },
+    "leefgeld": {
+      "boodschappen": 168,
+      "vervoer": 42,
+      "fun": 49,
+      "overig": 21
+    },
+    "vasteMutaties": [
+      {
+        "naam": "Bijbaan",
+        "type": "inkomsten",
+        "bedrag": 620,
+        "betaaldag": 24
+      },
+      {
+        "naam": "Telefoonabonnement",
+        "type": "uitgave",
+        "bedrag": 28,
+        "betaaldag": 5
+      },
+      {
+        "naam": "Streamingdienst",
+        "type": "uitgave",
+        "bedrag": 12,
+        "betaaldag": 14
+      }
+    ],
+    "kansKaarten": [
+      {
+        "tekst": "Je verkoopt oude games online.",
+        "soort": "plus",
+        "gevolg": 20
+      },
+      {
+        "tekst": "Je vergeet je lunch mee te nemen en koopt eten op school.",
+        "soort": "min",
+        "gevolg": -9
+      },
+      {
+        "tekst": "Je betaalt een kapotte koptelefoon.",
+        "soort": "min",
+        "gevolg": -25
+      }
+    ],
+    "plusMinKaarten": [
+      {
+        "tekst": "Je vrienden willen een weekendtrip plannen.",
+        "keuzeTekst1": "Je gaat mee en betaalt direct.",
+        "gevolg1": -60,
+        "keuzeTekst2": "Je stelt voor om een goedkopere dagtrip te doen.",
+        "gevolg2": -18,
+        "geenKeuzeTekst": "Je zegt niets en mist de groepskorting later.",
+        "gevolgGeenKeuze": -12
+      },
+      {
+        "tekst": "Je kunt tweedehands studieboeken overnemen.",
+        "keuzeTekst1": "Direct kopen.",
+        "gevolg1": -30,
+        "keuzeTekst2": "Lenen van een klasgenoot.",
+        "gevolg2": -5,
+        "geenKeuzeTekst": "Je wacht te lang en moet nieuw kopen.",
+        "gevolgGeenKeuze": -45
+      }
+    ]
+  }
+}

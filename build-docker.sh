@@ -10,7 +10,7 @@ PORT=${PORT:-3036}
 LCL_PLATFORM=${LCL_PLATFORM:-linux/amd64}
 PLATFORM=${PLATFORM:-linux/arm64}
 
-echo pm-budgetscanner version: ${VERSION}
+echo pm-spel version: ${VERSION}
 echo lcl_platform: ${LCL_PLATFORM}
 echo platform: ${PLATFORM}
 echo STAGE: ${STAGE}
@@ -18,11 +18,11 @@ echo STAGE: ${STAGE}
 pushd ${PWD}
 
 # Check if builder image exists, if not build it
-if [[ "$(docker images -q plusmin/pm-budgetscanner-builder:latest 2> /dev/null)" == "" ]]; then
-    echo "Builder image not found, building pm-budgetscanner-builder..."
+if [[ "$(docker images -q plusmin/pm-spel-builder:latest 2> /dev/null)" == "" ]]; then
+    echo "Builder image not found, building pm-spel-builder..."
     ./build-builder.sh
 else
-    echo "Builder image found, using existing pm-budgetscanner-builder..."
+    echo "Builder image found, using existing pm-spel-builder..."
 fi
 
 docker build \
@@ -31,6 +31,6 @@ docker build \
      --build-arg LCL_PLATFORM=${LCL_PLATFORM} \
      --build-arg STAGE=${STAGE} \
      --build-arg NPM_CONFIG_UNSAFE_PERM=true \
-     -t plusmin/pm-budgetscanner:${VERSION} .
+     -t plusmin/pm-spel:${VERSION} .
 
 popd

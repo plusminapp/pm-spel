@@ -1,26 +1,26 @@
-# BudgetScanner migratie-inventaris (2026-04-02)
+# Spel migratie-inventaris (2026-04-02)
 
-## Verhuisd naar pm-budgetscanner
+## Verhuisd naar pm-spel
 
-- Broncode: `src/pages/BudgetScanner/**` (inclusief `components`, `categorize`, `parsers`, `export`, `__tests__`)
-- Extra asset buiten BudgetScanner-map:
+- Broncode: `src/pages/Spel/**` (inclusief `components`, `categorize`, `parsers`, `export`, `__tests__`)
+- Extra asset buiten Spel-map:
   - `src/assets/plusminlogo.png`
 - Publieke resources:
-  - `public/docs/budgetscanner/BudgetScanner.md`
-  - `public/docs/budgetscanner/BudgetScanner.pdf`
-  - `public/docs/budgetscanner/genereer.sh`
-  - `public/docs/budgetscanner/toc-naar-nieuwe-pagina.tex`
-  - `public/docs/budgetscanner/images/**`
-  - `public/docs/budgetscanner/voorbeelden/**`
+  - `public/docs/spel/Spel.md`
+  - `public/docs/spel/Spel.pdf`
+  - `public/docs/spel/genereer.sh`
+  - `public/docs/spel/toc-naar-nieuwe-pagina.tex`
+  - `public/docs/spel/images/**`
+  - `public/docs/spel/voorbeelden/**`
 - Build-helper script:
-  - `build-budgetscanner-pdf.sh` (aangepast naar `pm-budgetscanner` pad)
+  - `build-spel-pdf.sh` (aangepast naar `pm-spel` pad)
 
-## In pm-budgetscanner nieuw ingericht
+## In pm-spel nieuw ingericht
 
 - Zelfstandige Vite + React + TypeScript setup
 - Router:
-  - `/` -> `BudgetScanner`
-  - `/help` -> `BudgetScannerHelp`
+  - `/` -> `Spel`
+  - `/help` -> `SpelHelp`
 - Tailwind + MUI basisstyling voor bestaande componenten
 - Vitest setup (`src/test/setup.ts`)
 

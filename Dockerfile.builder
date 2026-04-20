@@ -1,4 +1,4 @@
-# Builder image met alle dependencies voor pm-budgetscanner
+# Builder image met alle dependencies voor pm-spel
 FROM node:18-alpine
 
 # Werkdirectory instellen

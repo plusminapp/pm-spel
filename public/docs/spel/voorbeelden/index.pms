@@ -1,0 +1,28 @@
+{
+  "soort": "plusmin-index",
+  "schemaVersie": 1,
+  "bijgewerktOp": "2026-04-20T14:05:00.000Z",
+  "directoryHash": "sha256:9f5e0c7f4f2de12ea6d4f8d2bfc4b3445bf5372e0f4ac6f6921f9a0dc761f7d3",
+  "bestanden": [
+    {
+      "pad": "amina-nieuwkomer.pms",
+      "metadata": {
+        "naam": "Amina Nieuwkomer",
+        "taal": "nl",
+        "context": "nieuwkomers",
+        "beschrijving": "Persona met focus op eerste maanden budgetteren in Nederland.",
+        "niveau": 2
+      }
+    },
+    {
+      "pad": "noah-jongere.pms",
+      "metadata": {
+        "naam": "Noah Jongere",
+        "taal": "nl",
+        "context": "jongeren",
+        "beschrijving": "Persona voor jongeren die leren plannen met weekbudgetten.",
+        "niveau": 1
+      }
+    }
+  ]
+}

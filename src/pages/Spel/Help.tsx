@@ -29,7 +29,7 @@ function resolveDocAssetPath(src?: string): string | undefined {
   if (/^(https?:)?\/\//i.test(src) || src.startsWith('data:') || src.startsWith('/')) {
     return src
   }
-  return `/docs/budgetscanner/${src.replace(/^\.\//, '')}`
+  return `/docs/spel/${src.replace(/^\.\//, '')}`
 }
 
 function slugifyHeading(text: string): string {
@@ -84,11 +84,11 @@ function createHeadingRenderer(tag: 'h1' | 'h2' | 'h3' | 'h4', className: string
   }
 }
 
-type BudgetScannerHelpContentProps = {
+type SpelHelpContentProps = {
   containerClassName?: string
 }
 
-export function BudgetScannerHelpContent({ containerClassName = 'py-8 px-[10%]' }: BudgetScannerHelpContentProps) {
+export function SpelHelpContent({ containerClassName = 'py-8 px-[10%]' }: SpelHelpContentProps) {
   const [markdown, setMarkdown] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,7 +98,7 @@ export function BudgetScannerHelpContent({ containerClassName = 'py-8 px-[10%]' 
 
   useEffect(() => {
     // Laad het Markdown-bestand van de public folder
-    fetch('/docs/budgetscanner/BudgetScanner.md')
+    fetch('/docs/spel/Spel.md')
       .then((response) => {
         if (!response.ok) {
           throw new Error('Handleiding niet gevonden')
@@ -150,14 +150,14 @@ export function BudgetScannerHelpContent({ containerClassName = 'py-8 px-[10%]' 
             type="button"
             className="flex w-full items-center justify-between p-4 text-left"
             aria-expanded={isTocOpen}
-            aria-controls="budgetscanner-help-toc"
+            aria-controls="spel-help-toc"
             onClick={() => setIsTocOpen((open) => !open)}
           >
             <h2 className="text-lg font-semibold text-gray-900">Inhoudsopgave</h2>
             <span className="text-sm text-gray-600">{isTocOpen ? 'Verberg' : 'Toon'} inhoudsopgave</span>
           </button>
           {isTocOpen && (
-            <div id="budgetscanner-help-toc" className="border-t border-gray-200 px-4 pb-4 pt-3">
+            <div id="spel-help-toc" className="border-t border-gray-200 px-4 pb-4 pt-3">
               <ul className="space-y-2">
                 {tocItems.map((item) => (
                   <li key={item.id} className={item.level === 2 ? '' : item.level === 3 ? 'ml-4' : 'ml-8'}>
@@ -255,7 +255,7 @@ export function BudgetScannerHelpContent({ containerClassName = 'py-8 px-[10%]' 
   )
 }
 
-export function BudgetScannerHelp() {
+export function SpelHelp() {
   const navigate = useNavigate()
 
   return (
@@ -268,7 +268,7 @@ export function BudgetScannerHelp() {
             startIcon={<ArrowLeft className="h-4 w-4" />}
             onClick={() => navigate('/')}
           >
-            Terug naar het budgetscanner
+            Terug naar het spel
           </Button>
           <Button
             variant="text"
@@ -284,7 +284,7 @@ export function BudgetScannerHelp() {
         </div>
       </div>
 
-      <BudgetScannerHelpContent containerClassName="py-8 px-[10%]" />
+      <SpelHelpContent containerClassName="py-8 px-[10%]" />
 
       <div className="px-[10%] pb-8">
         <Button

@@ -1,6 +1,6 @@
 # Stap 1: Bouwen van de app - gebruik builder image
 ARG LCL_PLATFORM
-FROM --platform=${LCL_PLATFORM} plusmin/pm-budgetscanner-builder:latest AS builder
+FROM --platform=${LCL_PLATFORM} plusmin/pm-spel-builder:latest AS builder
 # Werkdirectory is al /app in de builder image
 ARG STAGE
 ENV STAGE=$STAGE

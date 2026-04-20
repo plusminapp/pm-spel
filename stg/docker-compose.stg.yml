@@ -1,9 +1,9 @@
-name: pm-budgetscanner-stg
+name: pm-spel-stg
 
 services:
-  pm-budgetscanner:
-    image: plusmin/pm-budgetscanner:${PM_STG_VERSION}
-    container_name: pm-budgetscanner
+  pm-spel:
+    image: plusmin/pm-spel:${PM_STG_VERSION}
+    container_name: pm-spel
     environment:
       - TZ=Europe/Amsterdam
     ports:

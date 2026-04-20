@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "BudgetScanner.pdf opnieuw genereren starten"
+echo "Spel.pdf opnieuw genereren starten"
 
-pandoc BudgetScanner.md -o BudgetScanner.pdf \
+pandoc Spel.md -o Spel.pdf \
   --pdf-engine=xelatex \
   -V lang=nl \
   -V mainfont='Trebuchet MS' \
@@ -16,4 +16,4 @@ pandoc BudgetScanner.md -o BudgetScanner.pdf \
   -V 'geometry:bottom=2cm' \
   --resource-path=.
 
-echo "BudgetScanner.pdf opnieuw genereren afgerond"
+echo "Spel.pdf opnieuw genereren afgerond"

@@ -1,0 +1,80 @@
+{
+  "soort": "plusmin-persona",
+  "schemaVersie": 1,
+  "persona": {
+    "naam": "Amina Nieuwkomer",
+    "taal": "nl",
+    "context": "nieuwkomers",
+    "beschrijving": "Persona met focus op eerste maanden budgetteren in Nederland.",
+    "niveau": 2,
+    "startsaldo": 85,
+    "dobbelWaarden": {
+      "euro": 9,
+      "tweeEuro": 16,
+      "drieEuro": 24
+    },
+    "leefgeld": {
+      "boodschappen": 196,
+      "vervoer": 56,
+      "fun": 42,
+      "overig": 28
+    },
+    "vasteMutaties": [
+      {
+        "naam": "Uitkering",
+        "type": "inkomsten",
+        "bedrag": 1080,
+        "betaaldag": 21
+      },
+      {
+        "naam": "Huur",
+        "type": "uitgave",
+        "bedrag": 520,
+        "betaaldag": 1
+      },
+      {
+        "naam": "Zorgverzekering",
+        "type": "uitgave",
+        "bedrag": 146,
+        "betaaldag": 12
+      }
+    ],
+    "kansKaarten": [
+      {
+        "tekst": "Je krijgt een kortingsbon voor boodschappen.",
+        "soort": "plus",
+        "gevolg": 12
+      },
+      {
+        "tekst": "Je ov-chipkaart moet worden opgeladen.",
+        "soort": "min",
+        "gevolg": -15
+      },
+      {
+        "tekst": "Je telefoonhoesje gaat stuk.",
+        "soort": "min",
+        "gevolg": -18
+      }
+    ],
+    "plusMinKaarten": [
+      {
+        "tekst": "Een vriend vraagt of je mee uit eten gaat.",
+        "keuzeTekst1": "Je gaat mee.",
+        "gevolg1": -22,
+        "keuzeTekst2": "Je stelt een thuismaaltijd voor.",
+        "gevolg2": -8,
+        "geenKeuzeTekst": "Je reageert te laat.",
+        "gevolgGeenKeuze": -5
+      },
+      {
+        "tekst": "Je kunt een tweedehands fiets kopen.",
+        "keuzeTekst1": "Nu kopen en op vervoer besparen.",
+        "gevolg1": -35,
+        "keuzeTekst2": "Nog even wachten.",
+        "gevolg2": 0,
+        "geenKeuzeTekst": "De fiets wordt aan iemand anders verkocht.",
+        "gevolgGeenKeuze": -7
+      }
+    ]
+  }
+}
