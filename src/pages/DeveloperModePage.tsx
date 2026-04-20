@@ -5,6 +5,8 @@ import { serializePersonaBestand } from '@/features/persona/serialization'
 import { useDirtyState, createEmptyPersona } from '@/features/developer/editorState'
 import { genereeerIndex, downloadIndex } from '@/features/persona/indexGenerate'
 import { vergelijkIndexMetScan, formateerDiffReport } from '@/features/persona/indexDiff'
+import { parseIndexJson } from '@/features/persona/indexFile'
+import { parsePersonaJson } from '@/features/persona/serialization'
 import type { Persona, VasteMutatie, KansKaart, PlusMinKaart, PersonaBestand } from '@/features/persona/types'
 
 type EditorTab = 'editor' | 'index'
@@ -794,14 +796,14 @@ function PlusMinKaartenEditor({
  * Index Workflow Tab: Scan, compare, generate, download
  */
 function IndexWorkflowTab() {
-  const [scannedFiles, setScannedFiles] = useState<Array<{ pad: string; naam: string; taal: string; context: string; beschrijving: string; niveau: number }>>([])
+  const [scannedFiles, setScannedFiles] = useState<Array<{ pad: string; naam: string; taal: string; context: string; beschrijving: string; niveau: number; lastModified?: number }>>([])
   const [scanMessage, setScanMessage] = useState<string>('')
 
   const handleFilesSelected = async (files: FileList | null) => {
     if (!files) return
 
     const pmsFiles: typeof scannedFiles = []
-    let indexContent: any = null
+    let indexContent = null
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
@@ -809,15 +811,15 @@ function IndexWorkflowTab() {
       if (file.name === 'index.pms') {
         const text = await file.text()
         try {
-          indexContent = JSON.parse(text)
-        } catch {
-          setScanMessage(`Fout bij parsen van index.pms: ${file.name}`)
+          indexContent = parseIndexJson(text)
+        } catch (error) {
+          setScanMessage(`Fout bij valideren van index.pms: ${(error as Error).message}`)
           return
         }
       } else if (file.name.endsWith('.pms')) {
         const text = await file.text()
         try {
-          const data = JSON.parse(text)
+          const data = parsePersonaJson(text)
           const persona = data.persona
           pmsFiles.push({
             pad: file.name,
@@ -826,9 +828,10 @@ function IndexWorkflowTab() {
             context: persona.context,
             beschrijving: persona.beschrijving,
             niveau: persona.niveau,
+            lastModified: file.lastModified || undefined,
           })
-        } catch {
-          setScanMessage(`Fout bij parsen van ${file.name}`)
+        } catch (error) {
+          setScanMessage(`Fout bij valideren van ${file.name}: ${(error as Error).message}`)
           return
         }
       }
@@ -847,7 +850,7 @@ function IndexWorkflowTab() {
           beschrijving: f.beschrijving,
           niveau: f.niveau,
         },
-        lastModified: Date.now(),
+        lastModified: f.lastModified,
       }))
       const diff = vergelijkIndexMetScan(scanWithMetadata, indexContent)
       setScanMessage(formateerDiffReport(diff))
@@ -859,7 +862,7 @@ function IndexWorkflowTab() {
   const handleGenerateIndex = () => {
     const index = genereeerIndex(scannedFiles.map(f => ({
       ...f,
-      lastModified: Date.now(),
+      lastModified: f.lastModified,
     })))
     downloadIndex(index)
     setScanMessage('Index gegenereerd en gedownload als index.pms')

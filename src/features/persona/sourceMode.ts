@@ -1,7 +1,31 @@
 import { PersonaImportFout } from './errors'
 import type { BronModus } from './types'
 
-export const CURATED_ALLOWLIST: readonly string[] = []
+function leesCuratedAllowlistVanEnv(): string[] {
+  const invoer = import.meta.env?.VITE_CURATED_ALLOWLIST
+  if (!invoer || typeof invoer !== 'string') {
+    return []
+  }
+
+  return Array.from(
+    new Set(
+      invoer
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => {
+          try {
+            return new URL(item).origin
+          } catch {
+            return null
+          }
+        })
+        .filter((item): item is string => Boolean(item)),
+    ),
+  )
+}
+
+export const CURATED_ALLOWLIST: readonly string[] = leesCuratedAllowlistVanEnv()
 
 export function beschrijfBronmodus(modus: BronModus, allowlist: readonly string[] = CURATED_ALLOWLIST): string {
   if (modus === 'open') {
@@ -45,7 +69,16 @@ export function bepaalToegestaneUrl(urlInvoer: string, opties: UrlRegelOpties): 
     return url
   }
 
-  const allowlist = new Set([...(opties.allowlist ?? CURATED_ALLOWLIST), ...(huidigeOrigin ? [huidigeOrigin] : [])])
+  const allowlist = new Set(
+    [...(opties.allowlist ?? CURATED_ALLOWLIST), ...(huidigeOrigin ? [huidigeOrigin] : [])]
+      .map((item) => {
+        try {
+          return new URL(item).origin
+        } catch {
+          return item
+        }
+      }),
+  )
 
   if (!allowlist.has(url.origin) && !isLokaleOntwikkelUrl(url)) {
     throw new PersonaImportFout('Deze URL is niet toegestaan in Curated mode.')

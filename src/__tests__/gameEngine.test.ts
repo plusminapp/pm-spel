@@ -92,4 +92,30 @@ describe('game engine', () => {
     expect(status.laatsteResultaat?.soort).toBe('min')
     expect(status.laatsteResultaat?.tekst).toBe('Min A')
   })
+
+  it('blokkeert nieuwe dobbelactie totdat plusmin keuze is verwerkt', () => {
+    const persona = maakPersona()
+    const random = () => 0
+    const start = initialiseerSpelStatus(persona, random)
+    const metPlusMin = voerDobbelActieUit(start, persona, 'PLUSMIN', random)
+    const blokResultaat = voerDobbelActieUit(metPlusMin, persona, 'PLUS', random)
+
+    expect(blokResultaat.laatsteResultaat?.soort).toBe('wacht-op-keuze')
+    expect(blokResultaat.laatsteResultaat?.tekst).toMatch(/kies eerst/i)
+  })
+
+  it('toont duidelijk resultaat als er geen plus kaarten zijn', () => {
+    const persona: Persona = {
+      ...maakPersona(),
+      kansKaarten: [
+        { tekst: 'Alleen min', soort: 'min', gevolg: -4 },
+      ],
+    }
+    const random = () => 0
+    const start = initialiseerSpelStatus(persona, random)
+    const resultaat = voerDobbelActieUit(start, persona, 'PLUS', random)
+
+    expect(resultaat.laatsteResultaat?.titel).toMatch(/geen plus-kaarten/i)
+    expect(resultaat.laatsteResultaat?.bedrag).toBe(0)
+  })
 })

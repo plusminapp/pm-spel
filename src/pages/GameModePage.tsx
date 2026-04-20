@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 
 import { PersonaImportPane } from '@/components/PersonaImportPane'
 import { ShareQrCard } from '@/components/ShareQrCard'
@@ -40,15 +40,19 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
   const [catalogusStatus, setCatalogusStatus] = useState<string | null>(null)
   const [delenStatus, setDelenStatus] = useState<string | null>(null)
   const shareLinkVerwerkt = useRef(false)
+  const deferredContextFilter = useDeferredValue(contextFilter)
+  const deferredTaalFilter = useDeferredValue(taalFilter)
+  const deferredNiveauFilter = useDeferredValue(niveauFilter)
+  const deferredBeschrijvingFilter = useDeferredValue(beschrijvingFilter)
 
   const filter = useMemo(
     () => ({
-      context: contextFilter,
-      taal: taalFilter,
-      niveau: niveauFilter,
-      beschrijving: beschrijvingFilter,
+      context: deferredContextFilter,
+      taal: deferredTaalFilter,
+      niveau: deferredNiveauFilter,
+      beschrijving: deferredBeschrijvingFilter,
     }),
-    [beschrijvingFilter, contextFilter, niveauFilter, taalFilter],
+    [deferredBeschrijvingFilter, deferredContextFilter, deferredNiveauFilter, deferredTaalFilter],
   )
 
   const gefilterdeIds = useMemo(() => {
@@ -202,8 +206,12 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
       return
     }
 
-    await navigator.clipboard.writeText(shareUrl)
-    setDelenStatus('Deel-URL gekopieerd naar het klembord.')
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setDelenStatus('Deel-URL gekopieerd naar het klembord.')
+    } catch (error) {
+      setDelenStatus(`Kopieren mislukt: ${(error as Error).message}`)
+    }
   }
 
   function handelDobbelClick(symbool: DobbelSymbool) {
@@ -281,8 +289,8 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
           </div>
         )}
 
-        {catalogusFout && <p className="feedback-message error">{catalogusFout}</p>}
-        {catalogusStatus && <p className="feedback-message success">{catalogusStatus}</p>}
+        {catalogusFout && <p className="feedback-message error" role="alert" aria-live="assertive">{catalogusFout}</p>}
+        {catalogusStatus && <p className="feedback-message success" role="status" aria-live="polite">{catalogusStatus}</p>}
       </section>
 
       <section className="mode-card paneel-stack" aria-labelledby="filter-title">
@@ -385,14 +393,14 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
               Kopieer deel-URL
             </button>
           </div>
-          {delenStatus && <p className="feedback-message success">{delenStatus}</p>}
+          {delenStatus && <p className="feedback-message success" role="status" aria-live="polite">{delenStatus}</p>}
           <ShareQrCard shareUrl={shareUrl} />
         </section>
       ) : geselecteerdePersona ? (
         <section className="mode-card paneel-stack">
           <h3>Delen</h3>
           <p>Deze persona heeft geen remote bron-URL. Delen via URL en QR werkt alleen voor persona&apos;s die vanaf een URL zijn geladen.</p>
-          {delenStatus && <p className="feedback-message success">{delenStatus}</p>}
+          {delenStatus && <p className="feedback-message success" role="status" aria-live="polite">{delenStatus}</p>}
         </section>
       ) : null}
 

@@ -18,6 +18,15 @@ type PersonaRuntimeProviderProps = {
   initialPersonas?: GeimporteerdePersona[]
 }
 
+function maakDedupSleutel(persona: GeimporteerdePersona): string {
+  if (persona.bronUrl) {
+    return `url:${persona.bronUrl}`
+  }
+
+  const meta = persona.metadata
+  return `meta:${meta.naam}|${meta.taal}|${meta.context}|${meta.niveau}|${meta.beschrijving}`
+}
+
 export function PersonaRuntimeProvider({ children, initialPersonas = [] }: PersonaRuntimeProviderProps) {
   const [modus, setModus] = useState<BronModus>('curated')
   const [personas, setPersonas] = useState<GeimporteerdePersona[]>(initialPersonas)
@@ -29,7 +38,9 @@ export function PersonaRuntimeProvider({ children, initialPersonas = [] }: Perso
     personas,
     voegPersonasToe: (nieuwePersonas) => {
       setPersonas((huidig) => {
-        const volgende = [...nieuwePersonas, ...huidig]
+        const bestaand = new Set(huidig.map(maakDedupSleutel))
+        const uniekeNieuwe = nieuwePersonas.filter((item) => !bestaand.has(maakDedupSleutel(item)))
+        const volgende = [...uniekeNieuwe, ...huidig]
         if (!geselecteerdePersonaId && volgende[0]) {
           setGeselecteerdePersonaId(volgende[0].id)
         }

@@ -153,6 +153,15 @@
   opacity: 0.65;
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pm-accent) 65%, white 35%);
+  outline-offset: 2px;
+}
+
 .file-input-card,
 .url-import-card,
 .list-card,
