@@ -14,16 +14,33 @@ describe('pwa registration', () => {
     expect(kanServiceWorkerRegistreren()).toBe(true)
   })
 
-  it('registreert de service worker op /sw.js', async () => {
+  it('registreert de service worker op /sw.js in productie', async () => {
     const register = vi.fn().mockResolvedValue(undefined)
+    const getRegistrations = vi.fn().mockResolvedValue([])
     Object.defineProperty(globalThis.navigator, 'serviceWorker', {
       configurable: true,
-      value: { register },
+      value: { register, getRegistrations },
     })
 
-    await registreerServiceWorker()
+    await registreerServiceWorker(true)
 
     expect(register).toHaveBeenCalledWith('/sw.js')
+  })
+
+  it('deregistreert bestaande service workers in development', async () => {
+    const register = vi.fn().mockResolvedValue(undefined)
+    const unregister = vi.fn().mockResolvedValue(true)
+    const getRegistrations = vi.fn().mockResolvedValue([{ unregister }])
+    Object.defineProperty(globalThis.navigator, 'serviceWorker', {
+      configurable: true,
+      value: { register, getRegistrations },
+    })
+
+    await registreerServiceWorker(false)
+
+    expect(getRegistrations).toHaveBeenCalled()
+    expect(unregister).toHaveBeenCalled()
+    expect(register).not.toHaveBeenCalled()
   })
 
   it('manifest bevat installeerbare basisvelden', () => {
