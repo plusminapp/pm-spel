@@ -9,6 +9,13 @@ import type { Persona, VasteMutatie, KansKaart, PlusMinKaart, PersonaBestand } f
 
 type EditorTab = 'editor' | 'index'
 
+/**
+ * Check if persona has minimum required fields for serialization
+ */
+function isPersonaValid(persona: Persona): boolean {
+  return !!(persona.naam.trim() && persona.taal.trim() && persona.context.trim() && persona.beschrijving.trim())
+}
+
 export function DeveloperModePage() {
   const { personas, geselecteerdePersonaId } = usePersonaRuntime()
   const geselecteerdePersona = personas.find((item) => item.id === geselecteerdePersonaId) ?? personas[0] ?? null
@@ -21,7 +28,10 @@ export function DeveloperModePage() {
   )
 
   const handleExport = useCallback(() => {
-    if (!editingPersona) return
+    if (!editingPersona || !isPersonaValid(editingPersona)) {
+      alert('Vul minimaal naam, taal, context en beschrijving in voordat je kunt exporteren.')
+      return
+    }
     const bestand: PersonaBestand = {
       soort: 'plusmin-persona',
       schemaVersie: 1,
@@ -33,11 +43,15 @@ export function DeveloperModePage() {
 
   const handleNew = useCallback(() => {
     if (isDirty) {
+      if (!isPersonaValid(editingPersona!)) {
+        alert('Je hebt een onvolledig persona geopend. Dit kan niet worden opgeslagen.\nKlik "Wijzigingen verwerpen" om opnieuw te beginnen.')
+        return
+      }
       setShowDirtyWarning(true)
       return
     }
     updatePersona(() => createEmptyPersona())
-  }, [isDirty, updatePersona])
+  }, [isDirty, editingPersona, updatePersona])
 
   const handleImport = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return
@@ -199,7 +213,7 @@ function EditorTab({
               style={{ display: 'none' }}
             />
           </label>
-          <button type="button" className="action-button" onClick={onExport} disabled={!isDirty}>
+          <button type="button" className="action-button" onClick={onExport} disabled={!isDirty || !isPersonaValid(persona)}>
             💾 Exporteer
           </button>
           {isDirty && (
@@ -420,7 +434,11 @@ function EditorTab({
       {/* JSON Preview */}
       <section className="mode-card paneel-stack">
         <h3>JSON Preview</h3>
-        <pre className="json-preview">{serializePersonaBestand({ soort: 'plusmin-persona', schemaVersie: 1, persona })}</pre>
+        {isPersonaValid(persona) ? (
+          <pre className="json-preview">{serializePersonaBestand({ soort: 'plusmin-persona', schemaVersie: 1, persona })}</pre>
+        ) : (
+          <p className="empty-state">Vul minimaal naam, taal, context en beschrijving in om een preview te zien.</p>
+        )}
       </section>
     </>
   )
