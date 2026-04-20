@@ -13,10 +13,15 @@ type PersonaRuntimeWaarde = {
 
 const PersonaRuntimeContext = createContext<PersonaRuntimeWaarde | null>(null)
 
-export function PersonaRuntimeProvider({ children }: { children: ReactNode }) {
+type PersonaRuntimeProviderProps = {
+  children: ReactNode
+  initialPersonas?: GeimporteerdePersona[]
+}
+
+export function PersonaRuntimeProvider({ children, initialPersonas = [] }: PersonaRuntimeProviderProps) {
   const [modus, setModus] = useState<BronModus>('curated')
-  const [personas, setPersonas] = useState<GeimporteerdePersona[]>([])
-  const [geselecteerdePersonaId, setGeselecteerdePersonaId] = useState<string | null>(null)
+  const [personas, setPersonas] = useState<GeimporteerdePersona[]>(initialPersonas)
+  const [geselecteerdePersonaId, setGeselecteerdePersonaId] = useState<string | null>(initialPersonas[0]?.id ?? null)
 
   const waarde = useMemo<PersonaRuntimeWaarde>(() => ({
     modus,

@@ -1,15 +1,30 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { PersonaImportPane } from '@/components/PersonaImportPane'
+import { initialiseerSpelStatus, verwerkPlusMinKeuze, voerDobbelActieUit, type DobbelSymbool } from '@/features/game/engine'
 import { filterPersonaMetadata } from '@/features/persona/metadata'
 import { usePersonaRuntime } from '@/features/persona/runtime'
 
-export function GameModePage() {
+type GameModePageProps = {
+  randomSource?: () => number
+}
+
+const DOBBEL_SYMBOLEN: Array<{ symbool: DobbelSymbool; label: string }> = [
+  { symbool: '?', label: '?' },
+  { symbool: '??', label: '??' },
+  { symbool: '???', label: '???' },
+  { symbool: 'PLUS', label: 'Plus' },
+  { symbool: 'PLUSMIN', label: 'PlusMin' },
+  { symbool: 'MIN', label: 'Min' },
+]
+
+export function GameModePage({ randomSource = Math.random }: GameModePageProps) {
   const { personas, geselecteerdePersonaId, selecteerPersona } = usePersonaRuntime()
   const [contextFilter, setContextFilter] = useState('')
   const [taalFilter, setTaalFilter] = useState('')
   const [niveauFilter, setNiveauFilter] = useState('')
   const [beschrijvingFilter, setBeschrijvingFilter] = useState('')
+  const [spelStatus, setSpelStatus] = useState<ReturnType<typeof initialiseerSpelStatus> | null>(null)
 
   const gefilterdeIds = useMemo(() => {
     const metadata = filterPersonaMetadata(
@@ -29,6 +44,32 @@ export function GameModePage() {
 
   const zichtbarePersonas = personas.filter((item) => gefilterdeIds.includes(item.id))
   const geselecteerdePersona = personas.find((item) => item.id === geselecteerdePersonaId) ?? zichtbarePersonas[0] ?? null
+
+  useEffect(() => {
+    if (!geselecteerdePersona) {
+      setSpelStatus(null)
+      return
+    }
+    setSpelStatus(initialiseerSpelStatus(geselecteerdePersona.bestand.persona, randomSource))
+  }, [geselecteerdePersona, randomSource])
+
+  function handelDobbelClick(symbool: DobbelSymbool) {
+    if (!geselecteerdePersona || !spelStatus) {
+      return
+    }
+
+    setSpelStatus((huidig) => {
+      if (!huidig) return huidig
+      return voerDobbelActieUit(huidig, geselecteerdePersona.bestand.persona, symbool, randomSource)
+    })
+  }
+
+  function handelPlusMinKeuze(keuze: 'keuze1' | 'keuze2' | 'geenkeuze') {
+    setSpelStatus((huidig) => {
+      if (!huidig) return huidig
+      return verwerkPlusMinKeuze(huidig, keuze)
+    })
+  }
 
   return (
     <div className="page-stack">
@@ -101,12 +142,72 @@ export function GameModePage() {
               <div><dt>Bron</dt><dd>{geselecteerdePersona.bronLabel}</dd></div>
               <div><dt>Startsaldo</dt><dd>{geselecteerdePersona.bestand.persona.startsaldo}</dd></div>
               <div><dt>Kanskaarten</dt><dd>{geselecteerdePersona.bestand.persona.kansKaarten.length}</dd></div>
+              <div><dt>PlusMin-kaarten</dt><dd>{geselecteerdePersona.bestand.persona.plusMinKaarten.length}</dd></div>
             </dl>
           </div>
         ) : (
           <p>Kies of importeer eerst een persona om metadata en inhoud te bekijken.</p>
         )}
       </section>
+
+      <section className="mode-card paneel-stack" aria-labelledby="kaart-title">
+        <h3 id="kaart-title">Dobbel en trek kaarten</h3>
+        {!geselecteerdePersona || !spelStatus ? (
+          <p>Kies eerst een persona. Daarna kun je met de dobbelsteen-symbolen direct een kaart of boodschappenactie trekken.</p>
+        ) : (
+          <>
+            <div className="dice-grid" role="group" aria-label="Dobbelsteen symbolen">
+              {DOBBEL_SYMBOLEN.map((item) => (
+                <button
+                  key={item.symbool}
+                  type="button"
+                  className="dice-button"
+                  onClick={() => handelDobbelClick(item.symbool)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="result-card" aria-live="polite">
+              {spelStatus.laatsteResultaat ? (
+                <>
+                  <strong>{spelStatus.laatsteResultaat.titel}</strong>
+                  <p>{spelStatus.laatsteResultaat.tekst}</p>
+                  <p className={spelStatus.laatsteResultaat.bedrag >= 0 ? 'amount amount-plus' : 'amount amount-min'}>
+                    Gevolg: {spelStatus.laatsteResultaat.bedrag}
+                  </p>
+                </>
+              ) : (
+                <p>Dobbel om je eerste actie van deze beurt te starten.</p>
+              )}
+            </div>
+          </>
+        )}
+      </section>
+
+      {spelStatus?.wachtOpPlusMinKeuze && (
+        <section className="choice-overlay" aria-live="assertive" aria-labelledby="plusmin-keuze-title">
+          <div className="choice-panel">
+            <h3 id="plusmin-keuze-title">PlusMin keuze</h3>
+            <p>{spelStatus.wachtOpPlusMinKeuze.tekst}</p>
+            <div className="choice-buttons">
+              <button type="button" className="choice-button" onClick={() => handelPlusMinKeuze('keuze1')}>
+                {spelStatus.wachtOpPlusMinKeuze.keuzeTekst1}
+                <span>Gevolg: {spelStatus.wachtOpPlusMinKeuze.gevolg1}</span>
+              </button>
+              <button type="button" className="choice-button" onClick={() => handelPlusMinKeuze('keuze2')}>
+                {spelStatus.wachtOpPlusMinKeuze.keuzeTekst2}
+                <span>Gevolg: {spelStatus.wachtOpPlusMinKeuze.gevolg2}</span>
+              </button>
+              <button type="button" className="choice-button secondary" onClick={() => handelPlusMinKeuze('geenkeuze')}>
+                {spelStatus.wachtOpPlusMinKeuze.geenKeuzeTekst}
+                <span>Gevolg: {spelStatus.wachtOpPlusMinKeuze.gevolgGeenKeuze}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
