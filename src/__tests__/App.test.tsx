@@ -11,7 +11,7 @@ afterEach(() => {
 describe('App shell routes', () => {
   it('shows spelmodus by default', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
       </MemoryRouter>
     )
@@ -25,7 +25,7 @@ describe('App shell routes', () => {
     )
 
     render(
-      <MemoryRouter initialEntries={['/help']}>
+      <MemoryRouter initialEntries={['/help']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
       </MemoryRouter>
     )

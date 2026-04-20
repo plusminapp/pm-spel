@@ -8,6 +8,7 @@ import { CacheProvider } from '@emotion/react';
 
 import './index.css'
 import App from './App'
+import { registreerServiceWorker } from './features/pwa/register'
 
 declare global {
   interface Window {
@@ -22,10 +23,12 @@ const muiCache = createCache({
   nonce: window.__csp_nonce__, // De waarde die NPM heeft ingevuld
 });
 
+void registreerServiceWorker();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <CacheProvider value={muiCache}>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <App />
     </BrowserRouter>
     </CacheProvider>

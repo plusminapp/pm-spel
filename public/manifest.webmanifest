@@ -1,0 +1,17 @@
+{
+  "name": "PlusMin Spel",
+  "short_name": "PlusMin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f1",
+  "theme_color": "#1f7a4f",
+  "description": "Stateless PlusMin spel-app met persona discovery, delen en offline app-shell.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

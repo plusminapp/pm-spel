@@ -13,7 +13,7 @@ export default function App() {
         <header className="app-header">
           <div className="brand-block">
             <h1>PlusMin Spel</h1>
-            <p>Fase 2: persona-bestanden importeren, valideren, filteren en exporteren in runtime-geheugen.</p>
+            <p>Fase 5: remote discovery, delen via URL en QR, Curated/Open mode en PWA app-shell.</p>
           </div>
           <nav className="main-nav" aria-label="Hoofdnavigatie">
             <NavLink to="/" end>Spelmodus</NavLink>
