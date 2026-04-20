@@ -3,6 +3,18 @@ import type { BronModus } from './types'
 
 export const CURATED_ALLOWLIST: readonly string[] = []
 
+export function beschrijfBronmodus(modus: BronModus, allowlist: readonly string[] = CURATED_ALLOWLIST): string {
+  if (modus === 'open') {
+    return 'Open mode laat elke geldige HTTPS-bron toe. Gebruik dit alleen als je de bron vertrouwt; netwerk-, CORS- of CSP-blokkades blijven mogelijk.'
+  }
+
+  if (allowlist.length === 0) {
+    return 'Curated mode staat alleen dezelfde origin toe en blokkeert alle andere domeinen totdat ze expliciet gewhitelist zijn.'
+  }
+
+  return `Curated mode staat alleen dezelfde origin en gewhiteliste domeinen toe: ${allowlist.join(', ')}.`
+}
+
 type UrlRegelOpties = {
   modus: BronModus
   allowlist?: readonly string[]

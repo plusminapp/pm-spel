@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 
 import { importeerPersonaBestandenVanFiles, importeerPersonaBestandVanUrl } from '@/features/persona/io'
 import { usePersonaRuntime } from '@/features/persona/runtime'
+import { beschrijfBronmodus } from '@/features/persona/sourceMode'
 
 type PersonaImportPaneProps = {
   titel: string
@@ -78,7 +79,7 @@ export function PersonaImportPane({ titel, beschrijving }: PersonaImportPaneProp
       </div>
 
       <p className="support-text">
-        Curated mode laat alleen dezelfde origin en expliciet gewhiteliste domeinen toe. Open mode laat elke geldige HTTPS-bron toe.
+        {beschrijfBronmodus(modus)}
       </p>
 
       <div className="paneel-grid">

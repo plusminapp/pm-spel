@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { PersonaImportPane } from '@/components/PersonaImportPane'
+import { ShareQrCard } from '@/components/ShareQrCard'
 import { initialiseerSpelStatus, verwerkPlusMinKeuze, voerDobbelActieUit, type DobbelSymbool } from '@/features/game/engine'
 import { filterPersonaMetadata } from '@/features/persona/metadata'
+import { importeerIndexVanUrl, laadPersonaVanCatalogusItem, type RemoteCatalogus, type RemoteCatalogusItem } from '@/features/persona/remoteCatalog'
 import { usePersonaRuntime } from '@/features/persona/runtime'
+import { beschrijfBronmodus } from '@/features/persona/sourceMode'
+import { leesPersonaDeelLink, maakPersonaDeelUrl } from '@/features/persona/share'
 
 type GameModePageProps = {
   randomSource?: () => number
@@ -18,40 +22,189 @@ const DOBBEL_SYMBOLEN: Array<{ symbool: DobbelSymbool; label: string }> = [
   { symbool: 'MIN', label: 'Min' },
 ]
 
+function maakMetadataSleutel(item: { naam: string; taal: string; context: string; niveau: number; beschrijving: string }) {
+  return `${item.naam}|${item.taal}|${item.context}|${item.niveau}|${item.beschrijving}`
+}
+
 export function GameModePage({ randomSource = Math.random }: GameModePageProps) {
-  const { personas, geselecteerdePersonaId, selecteerPersona } = usePersonaRuntime()
+  const { personas, geselecteerdePersonaId, selecteerPersona, voegPersonasToe, modus, setModus } = usePersonaRuntime()
   const [contextFilter, setContextFilter] = useState('')
   const [taalFilter, setTaalFilter] = useState('')
   const [niveauFilter, setNiveauFilter] = useState('')
   const [beschrijvingFilter, setBeschrijvingFilter] = useState('')
   const [spelStatus, setSpelStatus] = useState<ReturnType<typeof initialiseerSpelStatus> | null>(null)
+  const [indexUrl, setIndexUrl] = useState('')
+  const [catalogus, setCatalogus] = useState<RemoteCatalogus | null>(null)
+  const [catalogusBezig, setCatalogusBezig] = useState(false)
+  const [catalogusFout, setCatalogusFout] = useState<string | null>(null)
+  const [catalogusStatus, setCatalogusStatus] = useState<string | null>(null)
+  const [delenStatus, setDelenStatus] = useState<string | null>(null)
+  const shareLinkVerwerkt = useRef(false)
+
+  const filter = useMemo(
+    () => ({
+      context: contextFilter,
+      taal: taalFilter,
+      niveau: niveauFilter,
+      beschrijving: beschrijvingFilter,
+    }),
+    [beschrijvingFilter, contextFilter, niveauFilter, taalFilter],
+  )
 
   const gefilterdeIds = useMemo(() => {
     const metadata = filterPersonaMetadata(
       personas.map((item) => item.metadata),
-      {
-        context: contextFilter,
-        taal: taalFilter,
-        niveau: niveauFilter,
-        beschrijving: beschrijvingFilter,
-      },
+      filter,
     )
-    const sleutelSet = new Set(metadata.map((item) => `${item.naam}|${item.taal}|${item.context}|${item.niveau}|${item.beschrijving}`))
-    return personas
-      .filter((item) => sleutelSet.has(`${item.metadata.naam}|${item.metadata.taal}|${item.metadata.context}|${item.metadata.niveau}|${item.metadata.beschrijving}`))
-      .map((item) => item.id)
-  }, [beschrijvingFilter, contextFilter, niveauFilter, personas, taalFilter])
+    const sleutelSet = new Set(metadata.map((item) => maakMetadataSleutel(item)))
+    return personas.filter((item) => sleutelSet.has(maakMetadataSleutel(item.metadata))).map((item) => item.id)
+  }, [filter, personas])
+
+  const gefilterdeCatalogusItems = useMemo(() => {
+    if (!catalogus) {
+      return []
+    }
+
+    const metadata = filterPersonaMetadata(catalogus.items.map((item) => item.metadata), filter)
+    const sleutelSet = new Set(metadata.map((item) => maakMetadataSleutel(item)))
+    return catalogus.items.filter((item) => sleutelSet.has(maakMetadataSleutel(item.metadata)))
+  }, [catalogus, filter])
 
   const zichtbarePersonas = personas.filter((item) => gefilterdeIds.includes(item.id))
   const geselecteerdePersona = personas.find((item) => item.id === geselecteerdePersonaId) ?? zichtbarePersonas[0] ?? null
+  const shareUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !geselecteerdePersona?.bronUrl) {
+      return null
+    }
+
+    return maakPersonaDeelUrl(geselecteerdePersona.bronUrl, `${window.location.origin}${window.location.pathname}`, modus)
+  }, [geselecteerdePersona?.bronUrl, modus])
 
   useEffect(() => {
     if (!geselecteerdePersona) {
       setSpelStatus(null)
       return
     }
+
     setSpelStatus(initialiseerSpelStatus(geselecteerdePersona.bestand.persona, randomSource))
   }, [geselecteerdePersona, randomSource])
+
+  useEffect(() => {
+    if (shareLinkVerwerkt.current || typeof window === 'undefined') {
+      return
+    }
+
+    shareLinkVerwerkt.current = true
+    const { personaUrl, modus: gedeeldeModus } = leesPersonaDeelLink(window.location.href)
+
+    if (!personaUrl) {
+      return
+    }
+
+    const effectieveModus = gedeeldeModus ?? modus
+    if (gedeeldeModus) {
+      setModus(gedeeldeModus)
+    }
+
+    setDelenStatus('De gedeelde persona wordt geladen...')
+    void laadPersonaVanDeelLink(personaUrl, effectieveModus)
+  }, [modus, setModus])
+
+  async function laadPersonaVanDeelLink(personaUrl: string, bronModus: 'curated' | 'open') {
+    try {
+      const bestaand = personas.find((item) => item.bronUrl === personaUrl)
+      if (bestaand) {
+        selecteerPersona(bestaand.id)
+        setDelenStatus(`Gedeelde persona geopend: ${bestaand.metadata.naam}.`)
+        return
+      }
+
+      const persona = await laadPersonaVanCatalogusItem(
+        {
+          pad: new URL(personaUrl).pathname.split('/').pop() ?? 'persona.pms',
+          personaUrl,
+          metadata: {
+            naam: 'Gedeelde persona',
+            taal: 'onbekend',
+            context: 'gedeeld',
+            beschrijving: 'Wordt geladen via deel-link.',
+            niveau: 1,
+          },
+        },
+        {
+          modus: bronModus,
+          huidigeOrigin: window.location.origin,
+        },
+      )
+
+      voegPersonasToe([persona])
+      selecteerPersona(persona.id)
+      setDelenStatus(`Gedeelde persona geladen: ${persona.metadata.naam}.`)
+    } catch (error) {
+      setDelenStatus((error as Error).message)
+    }
+  }
+
+  async function laadRemoteIndex() {
+    if (!indexUrl.trim()) {
+      setCatalogusFout('Voer eerst de URL van een index.pms bestand in.')
+      return
+    }
+
+    setCatalogusBezig(true)
+    setCatalogusFout(null)
+    setCatalogusStatus(null)
+
+    try {
+      const geladenCatalogus = await importeerIndexVanUrl(indexUrl.trim(), {
+        modus,
+        huidigeOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
+      })
+      setCatalogus(geladenCatalogus)
+      setCatalogusStatus(`Index geladen: ${geladenCatalogus.items.length} persona's gevonden.`)
+    } catch (error) {
+      setCatalogus(null)
+      setCatalogusFout((error as Error).message)
+    } finally {
+      setCatalogusBezig(false)
+    }
+  }
+
+  async function laadRemotePersona(item: RemoteCatalogusItem) {
+    setCatalogusBezig(true)
+    setCatalogusFout(null)
+    setCatalogusStatus(null)
+
+    try {
+      const bestaand = personas.find((persona) => persona.bronUrl === item.personaUrl)
+      if (bestaand) {
+        selecteerPersona(bestaand.id)
+        setCatalogusStatus(`Persona al geladen: ${bestaand.metadata.naam}.`)
+        return
+      }
+
+      const persona = await laadPersonaVanCatalogusItem(item, {
+        modus,
+        huidigeOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
+      })
+      voegPersonasToe([persona])
+      selecteerPersona(persona.id)
+      setCatalogusStatus(`Persona geladen vanuit remote index: ${persona.metadata.naam}.`)
+    } catch (error) {
+      setCatalogusFout((error as Error).message)
+    } finally {
+      setCatalogusBezig(false)
+    }
+  }
+
+  async function kopieerDeelUrl() {
+    if (!shareUrl || typeof navigator === 'undefined' || !navigator.clipboard) {
+      return
+    }
+
+    await navigator.clipboard.writeText(shareUrl)
+    setDelenStatus('Deel-URL gekopieerd naar het klembord.')
+  }
 
   function handelDobbelClick(symbool: DobbelSymbool) {
     if (!geselecteerdePersona || !spelStatus) {
@@ -76,18 +229,64 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
       <section className="mode-card paneel-stack" aria-labelledby="spelmodus-title">
         <h2 id="spelmodus-title">Spelmodus</h2>
         <p>
-          Laad persona-bestanden in het runtime-geheugen en filter de metadata op context, taal, niveau en beschrijving.
-          De spelmechanica volgt in Fase 3; nu staat de spelerselectie-datalaag klaar.
+          Ontdek persona&apos;s via een remote index, filter eerst op metadata en laad pas daarna de gekozen .pms volledig in het
+          runtime-geheugen. Lokale import, directe URL-import en deel-links blijven daarnaast beschikbaar.
         </p>
+      </section>
+
+      <section className={modus === 'open' ? 'mode-card paneel-stack risk-card' : 'mode-card paneel-stack'} aria-labelledby="mode-title">
+        <h3 id="mode-title">Bronmodus</h3>
+        <div className="mode-toggle-group" role="group" aria-label="Bronmodus">
+          <button type="button" className={modus === 'curated' ? 'pill-button active' : 'pill-button'} onClick={() => setModus('curated')}>
+            Curated mode
+          </button>
+          <button type="button" className={modus === 'open' ? 'pill-button active' : 'pill-button'} onClick={() => setModus('open')}>
+            Open mode
+          </button>
+        </div>
+        <p className="support-text">{beschrijfBronmodus(modus)}</p>
       </section>
 
       <PersonaImportPane
         titel="Persona's laden voor spelers"
-        beschrijving="Importeer lokale of remote .pms bestanden. Alleen metadata wordt hieronder gefilterd; de volledige persona blijft beschikbaar in het geheugen."
+        beschrijving="Importeer lokale .pms bestanden of laad direct een bekende persona-URL. Deze flow blijft volledig stateless: alleen het runtime-geheugen wordt bijgewerkt."
       />
 
+      <section className="mode-card paneel-stack" aria-labelledby="remote-title">
+        <h3 id="remote-title">Remote discovery via index.pms</h3>
+        <div className="paneel-grid remote-grid">
+          <label className="field-stack field-stack-wide" htmlFor="index-url-input">
+            <span>Index URL</span>
+            <input
+              id="index-url-input"
+              className="text-input"
+              inputMode="url"
+              placeholder="https://voorbeeld.nl/personas/index.pms"
+              value={indexUrl}
+              onChange={(event) => setIndexUrl(event.target.value)}
+            />
+          </label>
+          <div className="button-row">
+            <button type="button" className="action-button" disabled={catalogusBezig} onClick={() => void laadRemoteIndex()}>
+              {catalogusBezig ? 'Index laden...' : 'Laad index.pms'}
+            </button>
+          </div>
+        </div>
+
+        {catalogus && (
+          <div className="catalog-summary">
+            <span>Bijgewerkt: {catalogus.bijgewerktOp}</span>
+            <span>Hash: {catalogus.directoryHash}</span>
+            <span>Index: {catalogus.indexUrl}</span>
+          </div>
+        )}
+
+        {catalogusFout && <p className="feedback-message error">{catalogusFout}</p>}
+        {catalogusStatus && <p className="feedback-message success">{catalogusStatus}</p>}
+      </section>
+
       <section className="mode-card paneel-stack" aria-labelledby="filter-title">
-        <h3 id="filter-title">Filterbare metadata</h3>
+        <h3 id="filter-title">Filter op metadata</h3>
         <div className="filter-grid">
           <label className="field-stack">
             <span>Context</span>
@@ -106,9 +305,37 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
             <input className="text-input" value={beschrijvingFilter} onChange={(event) => setBeschrijvingFilter(event.target.value)} />
           </label>
         </div>
+      </section>
 
+      <section className="mode-card paneel-stack" aria-labelledby="catalog-title">
+        <h3 id="catalog-title">Remote catalogus</h3>
+        {!catalogus ? (
+          <p>Laad eerst een index.pms bron om remote persona&apos;s te ontdekken.</p>
+        ) : gefilterdeCatalogusItems.length === 0 ? (
+          <p>Geen remote persona&apos;s gevonden voor het huidige filter.</p>
+        ) : (
+          <div className="list-stack">
+            {gefilterdeCatalogusItems.map((item) => (
+              <div key={item.personaUrl} className="list-card split-card">
+                <div>
+                  <strong>{item.metadata.naam}</strong>
+                  <span>{item.metadata.context} · {item.metadata.taal} · niveau {item.metadata.niveau}</span>
+                  <span>{item.metadata.beschrijving}</span>
+                  <span>{item.pad}</span>
+                </div>
+                <button type="button" className="action-button" disabled={catalogusBezig} onClick={() => void laadRemotePersona(item)}>
+                  Laad persona
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mode-card paneel-stack" aria-labelledby="loaded-title">
+        <h3 id="loaded-title">Geladen persona&apos;s in runtime</h3>
         {zichtbarePersonas.length === 0 ? (
-          <p>Er zijn nog geen persona's die aan het huidige filter voldoen.</p>
+          <p>Er zijn nog geen geladen persona&apos;s die aan het huidige filter voldoen.</p>
         ) : (
           <div className="list-stack">
             {zichtbarePersonas.map((item) => (
@@ -149,6 +376,25 @@ export function GameModePage({ randomSource = Math.random }: GameModePageProps) 
           <p>Kies of importeer eerst een persona om metadata en inhoud te bekijken.</p>
         )}
       </section>
+
+      {shareUrl ? (
+        <section className="mode-card paneel-stack" aria-labelledby="share-actions-title">
+          <div className="split-heading">
+            <h3 id="share-actions-title">Delen</h3>
+            <button type="button" className="pill-button" onClick={() => void kopieerDeelUrl()}>
+              Kopieer deel-URL
+            </button>
+          </div>
+          {delenStatus && <p className="feedback-message success">{delenStatus}</p>}
+          <ShareQrCard shareUrl={shareUrl} />
+        </section>
+      ) : geselecteerdePersona ? (
+        <section className="mode-card paneel-stack">
+          <h3>Delen</h3>
+          <p>Deze persona heeft geen remote bron-URL. Delen via URL en QR werkt alleen voor persona&apos;s die vanaf een URL zijn geladen.</p>
+          {delenStatus && <p className="feedback-message success">{delenStatus}</p>}
+        </section>
+      ) : null}
 
       <section className="mode-card paneel-stack" aria-labelledby="kaart-title">
         <h3 id="kaart-title">Dobbel en trek kaarten</h3>

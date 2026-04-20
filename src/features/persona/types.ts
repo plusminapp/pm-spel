@@ -97,4 +97,5 @@ export type GeimporteerdePersona = {
   metadata: PersonaMetadata
   bronType: 'lokaal' | 'url'
   bronLabel: string
+  bronUrl?: string
 }

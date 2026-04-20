@@ -1,4 +1,5 @@
 import { maakPersonaMetadata } from './metadata'
+import { PersonaImportFout } from './errors'
 import { sanitiseerBestandsNaam } from './sanitize'
 import { bepaalToegestaneUrl } from './sourceMode'
 import { parsePersonaJson, serializePersonaBestand } from './serialization'
@@ -17,13 +18,19 @@ function maakImportId(): string {
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-function maakGeimporteerdePersona(bestand: PersonaBestand, bronType: 'lokaal' | 'url', bronLabel: string): GeimporteerdePersona {
+function maakGeimporteerdePersona(
+  bestand: PersonaBestand,
+  bronType: 'lokaal' | 'url',
+  bronLabel: string,
+  bronUrl?: string,
+): GeimporteerdePersona {
   return {
     id: maakImportId(),
     bestand,
     metadata: maakPersonaMetadata(bestand),
     bronType,
     bronLabel,
+    bronUrl,
   }
 }
 
@@ -47,20 +54,26 @@ export async function importeerPersonaBestandVanUrl(urlInvoer: string, opties: U
   })
 
   const fetcher = opties.fetcher ?? fetch
-  const response = await fetcher(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json,text/plain;q=0.9,*/*;q=0.8',
-    },
-  })
+  let response: Response
+
+  try {
+    response = await fetcher(url.toString(), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json,text/plain;q=0.9,*/*;q=0.8',
+      },
+    })
+  } catch (error) {
+    throw new PersonaImportFout(`Download mislukt door netwerk-, CORS- of CSP-probleem: ${(error as Error).message}`)
+  }
 
   if (!response.ok) {
-    throw new Error(`Download mislukt (${response.status}).`)
+    throw new PersonaImportFout(`Download mislukt (${response.status}).`)
   }
 
   const inhoud = await response.text()
   const bestand = parsePersonaJson(inhoud)
-  return maakGeimporteerdePersona(bestand, 'url', url.toString())
+  return maakGeimporteerdePersona(bestand, 'url', url.toString(), url.toString())
 }
 
 export function maakDownloadBestandsNaam(bestand: PersonaBestand): string {
